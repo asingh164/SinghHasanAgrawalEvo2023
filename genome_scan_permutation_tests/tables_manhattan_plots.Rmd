@@ -1,0 +1,848 @@
+---
+title: "grm_tables"
+output: pdf_document
+---
+
+################# SET UP #################
+```{r}
+setwd('/Users/asad/drive/Desktop/EEB498/permutation_tests')
+library(tidyverse)
+library(readxl)
+library(qvalue)
+```
+
+################# READ IN DATA #################
+```{r}
+
+  ### Read p-values in from true genome scan ###
+p_nogrm_true <- read_csv('/Users/asad/Drive/Desktop/EEB498/genome_scan/p_nogrm_true.csv', col_names = FALSE)
+
+   ### Read p-values from model without grm ###
+nogrm_p_list <- list.files(pattern = 'nogrm_p')
+nogrm_p <- read_csv(nogrm_p_list[1], col_names = FALSE, col_types = cols())
+
+for (i in 2:60){
+  temp <- read_csv(nogrm_p_list[i], col_names = FALSE, col_types = cols())
+  nogrm_p <- rbind(nogrm_p, temp)
+}
+
+
+    ### Read test statistic from model without grm ###
+nogrm_d_list <- list.files(pattern = 'nogrm_d')
+nogrm_d <- read_csv(nogrm_d_list[1], col_names = FALSE, col_types = cols())
+
+for (i in 2:60){
+  temp <- read_csv(nogrm_d_list[i], col_names = FALSE, col_types = cols())
+  nogrm_d <- rbind(nogrm_d, temp)
+}
+
+```
+
+
+######## DESIGN OUTPUT TABLES ###########
+```{r}
+sav_df <- as.data.frame(matrix(nrow = 7, ncol = 5))
+sav_df$V1 <- c('SA Axis Vial', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+sav_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+sac_df <- as.data.frame(matrix(nrow = 7, ncol = 5))
+sac_df$V1 <- c('SA Axis Cage', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+sac_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+scv_df <- as.data.frame(matrix(nrow = 7, ncol = 5))
+scv_df$V1 <- c('SC Axis Vial', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+scv_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+scc_df <- as.data.frame(matrix(nrow = 7, ncol = 5))
+scc_df$V1 <- c('SC Axis Cage', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+scc_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+```
+
+### Fill in Number of Blocks for each SA and SC Trait
+```{r}
+
+# SEXUAL ANTAGONISM VIAL
+
+#Collect all p-values for every 7th block for the trait
+sav_true <- p_nogrm_true %>%
+  filter(.[1] == 'sa.axis.vial') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+#Get number of blocks under each threshold
+sav_0.1_t <- length(sav_true[sav_true <= 0.1])
+sav_0.05_t <- length(sav_true[sav_true <= 0.05])
+sav_0.01_t <- length(sav_true[sav_true <= 0.01])
+sav_0.001_t <- length(sav_true[sav_true <= 0.001])
+
+sav_q_0.3_t <- length(qvalue(sav_true)$qvalues[qvalue(sav_true)$qvalues <= 0.3])
+sav_q_0.2_t <- length(qvalue(sav_true)$qvalues[qvalue(sav_true)$qvalues <= 0.2])
+sav_q_0.1_t <- length(qvalue(sav_true)$qvalues[qvalue(sav_true)$qvalues <= 0.1])
+
+#Put into respective df for each trait
+sav_df[2:7, 2] <- c(sav_0.001_t, sav_0.01_t, sav_0.05_t, sav_q_0.1_t, sav_q_0.2_t, sav_q_0.3_t)
+
+# SEXUAL CONCORDANCE VIAL
+
+scv_true <- p_nogrm_true %>%
+  filter(.[1] == 'sc.axis.vial') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+scv_0.1_t <- length(scv_true[scv_true <= 0.1])
+scv_0.05_t <- length(scv_true[scv_true <= 0.05])
+scv_0.01_t <- length(scv_true[scv_true <= 0.01])
+scv_0.001_t <- length(scv_true[scv_true <= 0.001])
+
+scv_q_0.3_t <- length(qvalue(scv_true)$qvalues[qvalue(scv_true)$qvalues <= 0.3])
+scv_q_0.2_t <- length(qvalue(scv_true)$qvalues[qvalue(scv_true)$qvalues <= 0.2])
+scv_q_0.1_t <- length(qvalue(scv_true)$qvalues[qvalue(scv_true)$qvalues <= 0.1])
+
+scv_df[2:7, 2] <- c(scv_0.001_t, scv_0.01_t, scv_0.05_t, scv_q_0.1_t, scv_q_0.2_t, scv_q_0.3_t)
+
+# SEXUAL ANTAGONISM CAGE
+
+sac_true <- p_nogrm_true %>%
+  filter(.[1] == 'sa.axis.cage') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+sac_0.1_t <- length(sac_true[sac_true <= 0.1])
+sac_0.05_t <- length(sac_true[sac_true <= 0.05])
+sac_0.01_t <- length(sac_true[sac_true <= 0.01])
+sac_0.001_t <- length(sac_true[sac_true <= 0.001])
+
+sac_q_0.3_t <- length(qvalue(sac_true)$qvalues[qvalue(sac_true)$qvalues <= 0.3])
+sac_q_0.2_t <- length(qvalue(sac_true)$qvalues[qvalue(sac_true)$qvalues <= 0.2])
+sac_q_0.1_t <- length(qvalue(sac_true)$qvalues[qvalue(sac_true)$qvalues <= 0.1])
+
+sac_df[2:7, 2] <- c(sac_0.001_t, sac_0.01_t, sac_0.05_t, sac_q_0.1_t, sac_q_0.2_t, sac_q_0.3_t)
+
+#SEXUAL CONCORDANCE CAGE
+
+scc_true <- p_nogrm_true %>%
+  filter(.[1] == 'sc.axis.cage') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+scc_0.1_t <- length(scc_true[scc_true <= 0.1])
+scc_0.05_t <- length(scc_true[scc_true <= 0.05])
+scc_0.01_t <- length(scc_true[scc_true <= 0.01])
+scc_0.001_t <- length(scc_true[scc_true <= 0.001])
+
+scc_q_0.3_t <- length(qvalue(scc_true)$qvalues[qvalue(scc_true)$qvalues <= 0.3])
+scc_q_0.2_t <- length(qvalue(scc_true)$qvalues[qvalue(scc_true)$qvalues <= 0.2])
+scc_q_0.1_t <- length(qvalue(scc_true)$qvalues[qvalue(scc_true)$qvalues <= 0.1])
+
+scc_df[2:7, 2] <- c(scc_0.001_t, scc_0.01_t, scc_0.05_t, scc_q_0.1_t, scc_q_0.2_t, scc_q_0.3_t)
+
+```
+
+##### FILL IN PROPORTION OF PERMUTATIONS WITH AS MANY OR MORE BLOCKS
+```{r}
+model <- nogrm_p # with or without GRM
+
+perm_no <- length(grm_p$X1)/8
+## SA Axis Cage ##
+
+
+sac_p_df <- model %>%
+  filter(model[2] == 'sa.axis.cage')
+
+
+sac_p_0.1 <- vector(length = perm_no)
+sac_p_0.05 <- vector(length = perm_no)
+sac_p_0.01 <- vector(length = perm_no)
+sac_p_0.001 <- vector(length = perm_no)
+sac_q_0.3 <- vector(length = perm_no)
+sac_q_0.2 <- vector(length = perm_no)
+sac_q_0.1 <- vector(length = perm_no)
+
+for(perm in 1:nrow(sac_p_df)){
+  
+  temp <- as.numeric(sac_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(sac_p_df[perm,3:1684]))$qvalues
+  
+  sac_p_0.1[perm] <- length(temp[temp <= 0.1])
+  sac_p_0.05[perm] <- length(temp[temp <= 0.05])
+  sac_p_0.01[perm] <- length(temp[temp <= 0.01])
+  sac_p_0.001[perm] <- length(temp[temp <= 0.001])
+  
+  sac_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+  sac_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  sac_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+}
+
+sac_df[2, 3] <- round(length(sac_p_0.001[sac_p_0.001 >= sac_0.001_t])/perm_no, 4)
+sac_df[3, 3] <- round(length(sac_p_0.01[sac_p_0.01 >= sac_0.01_t])/perm_no, 4)
+sac_df[4, 3] <- round(length(sac_p_0.05[sac_p_0.05 >= sac_0.05_t])/perm_no, 4)
+sac_df[5, 3] <- round(length(sac_q_0.1[sac_q_0.1 >= sac_q_0.1_t])/perm_no, 4)
+sac_df[6, 3] <- round(length(sac_q_0.2[sac_q_0.2 >= sac_q_0.2_t])/perm_no, 4)
+sac_df[7, 3] <- round(length(sac_q_0.3[sac_q_0.3 >= sac_q_0.3_t])/perm_no, 4)
+
+#Finish for Q Values
+
+## SC Axis Cage ##
+
+scc_p_df <- model %>%
+  filter(model[2] == 'sc.axis.cage')
+
+
+scc_p_0.1 <- vector(length = perm_no)
+scc_p_0.05 <- vector(length = perm_no)
+scc_p_0.01 <- vector(length = perm_no)
+scc_p_0.001 <- vector(length = perm_no)
+scc_q_0.3 <- vector(length = perm_no)
+scc_q_0.2 <- vector(length = perm_no)
+scc_q_0.1 <- vector(length = perm_no)
+
+
+for(perm in 1:nrow(scc_p_df)){
+  
+  temp <- as.numeric(scc_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(scc_p_df[perm,3:1684]))$qvalues
+  
+  scc_p_0.1[perm] <- length(temp[temp <= 0.1])
+  scc_p_0.05[perm] <- length(temp[temp <= 0.05])
+  scc_p_0.01[perm] <- length(temp[temp <= 0.01])
+  scc_p_0.001[perm] <- length(temp[temp <= 0.001])
+  
+  scc_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+  scc_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  scc_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+}
+
+
+scc_df[2, 3] <- round(length(scc_p_0.001[scc_p_0.001 >= scc_0.001_t])/perm_no, 4)
+scc_df[3, 3] <- round(length(scc_p_0.01[scc_p_0.01 >= scc_0.01_t])/perm_no, 4)
+scc_df[4, 3] <- round(length(scc_p_0.05[scc_p_0.05 >= scc_0.05_t])/perm_no, 4)
+scc_df[5, 3] <- round(length(scc_q_0.1[scc_q_0.1 >= scc_q_0.1_t])/perm_no, 4)
+scc_df[6, 3] <- round(length(scc_q_0.2[scc_q_0.2 >= scc_q_0.2_t])/perm_no, 4)
+scc_df[7, 3] <- round(length(scc_q_0.3[scc_q_0.3 >= scc_q_0.3_t])/perm_no, 4)
+
+## SA Axis Vial ##
+
+sav_p_df <- model %>%
+  filter(model[2] == 'sa.axis.vial')
+
+sav_p_0.1 <- vector(length = perm_no)
+sav_p_0.05 <- vector(length = perm_no)
+sav_p_0.01 <- vector(length = perm_no)
+sav_p_0.001 <- vector(length = perm_no)
+sav_q_0.3 <- vector(length = perm_no)
+sav_q_0.2 <- vector(length = perm_no)
+sav_q_0.1 <- vector(length = perm_no)
+
+for(perm in 1:nrow(sav_p_df)){
+  
+  temp <- as.numeric(sav_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(sav_p_df[perm,3:1684]))$qvalues
+  
+  sav_p_0.1[perm] <- length(temp[temp <= 0.1])
+  sav_p_0.05[perm] <- length(temp[temp <= 0.05])
+  sav_p_0.01[perm] <- length(temp[temp <= 0.01])
+  sav_p_0.001[perm] <- length(temp[temp <= 0.001])
+  
+  sav_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+  sav_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  sav_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+}
+
+sav_df[2, 3] <- round(length(sav_p_0.001[sav_p_0.001 >= sav_0.001_t])/perm_no, 4)
+sav_df[3, 3] <- round(length(sav_p_0.01[sav_p_0.01 >= sav_0.01_t])/perm_no, 4)
+sav_df[4, 3] <- round(length(sav_p_0.05[sav_p_0.05 >= sav_0.05_t])/perm_no, 4)
+sav_df[5, 3] <- round(length(sav_q_0.1[sav_q_0.1 >= sav_q_0.1_t])/perm_no, 4)
+sav_df[6, 3] <- round(length(sav_q_0.2[sav_q_0.2 >= sav_q_0.2_t])/perm_no, 4)
+sav_df[7, 3] <- round(length(sav_q_0.3[sav_q_0.3 >= sav_q_0.3_t])/perm_no, 4)
+
+## SC Axis Vial ##
+
+scv_p_df <- model %>%
+  filter(model[2] == 'sc.axis.vial')
+
+scv_p_0.1 <- vector(length = perm_no)
+scv_p_0.05 <- vector(length = perm_no)
+scv_p_0.01 <- vector(length = perm_no)
+scv_p_0.001 <- vector(length = perm_no)
+scv_q_0.3 <- vector(length = perm_no)
+scv_q_0.2 <- vector(length = perm_no)
+scv_q_0.1 <- vector(length = perm_no)
+
+for(perm in 1:nrow(scv_p_df)){
+  
+  temp <- as.numeric(scv_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(scv_p_df[perm,3:1684]))$qvalues
+  
+  scv_p_0.1[perm] <- length(temp[temp <= 0.1])
+  scv_p_0.05[perm] <- length(temp[temp <= 0.05])
+  scv_p_0.01[perm] <- length(temp[temp <= 0.01])
+  scv_p_0.001[perm] <- length(temp[temp <= 0.001])
+  
+  scv_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+  scv_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  scv_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+}
+
+scv_df[2, 3] <- round(length(scv_p_0.001[scv_p_0.001 >= scv_0.001_t])/perm_no, 4)
+scv_df[3, 3] <- round(length(scv_p_0.01[scv_p_0.01 >= scv_0.01_t])/perm_no, 4)
+scv_df[4, 3] <- round(length(scv_p_0.05[scv_p_0.05 >= scv_0.05_t])/perm_no, 4)
+scv_df[5, 3] <- round(length(scv_q_0.1[scv_q_0.1 >= scv_q_0.1_t])/perm_no, 4)
+scv_df[6, 3] <- round(length(scv_q_0.2[scv_q_0.2 >= scv_q_0.2_t])/perm_no, 4)
+scv_df[7, 3] <- round(length(scv_q_0.3[scv_q_0.3 >= scv_q_0.3_t])/perm_no, 4)
+
+
+# sac_df[2,3] <-round(length(sac_p_0.1[sac_p_0.1 >= sac_0.1_t])/perm_no, 4)
+# scc_df[2,3] <-round(length(scc_p_0.1[scc_p_0.1 >= scc_0.1_t])/perm_no, 4)
+# sav_df[2,3] <-round(length(sav_p_0.1[sav_p_0.1 >= sav_0.1_t])/perm_no, 4)
+# scv_df[2,3] <-round(length(scv_p_0.1[scv_p_0.1 >= scv_0.1_t])/perm_no, 4)
+
+
+```
+### Graph p <= 0.05
+```{r}
+ggplot() + geom_histogram(aes(x = sac_p_0.05)) + 
+  geom_vline(xintercept = sac_0.05_t) + 
+  xlab('No. of blocks p <= 0.05') + ylab('No. of permutations') + 
+  annotate('text', x = 200, y = 100, size = 7, label = paste('p <=', sac_df[4, 3] )) + 
+  ggtitle('SA Cage')
+
+ggplot() + geom_histogram(aes(x = scc_p_0.05)) + 
+  geom_vline(xintercept = scc_0.05_t) + 
+  xlab('No. of blocks p <= 0.05') + ylab('No. of permutations') + 
+  annotate('text', x = 200, y = 100, size = 7, label = paste('p <=', scc_df[4, 3] )) + 
+  ggtitle('SC Cage')
+
+ggplot() + geom_histogram(aes(x = sav_p_0.05)) + 
+  geom_vline(xintercept = sav_0.05_t) + 
+  xlab('No. of blocks p <= 0.05') + ylab('No. of permutations') + 
+  annotate('text', x = 200, y = 100, size = 7, label = paste('p <=', sav_df[4, 3] )) + 
+  ggtitle('SA Vial')
+
+ggplot() + geom_histogram(aes(x = scv_p_0.05)) + 
+  geom_vline(xintercept = scv_0.05_t) + 
+  xlab('No. of blocks p <= 0.05') + ylab('No. of permutations') + 
+  annotate('text', x = 200, y = 100, size = 7, label = paste('p <=', scv_df[4, 3] )) + 
+  ggtitle('SC Vial')
+```
+
+### Get list of chromosomes and create vector of chr
+```{r}
+#Get list of chromosomes for every 7th block
+chr <- vector(length = 1681)
+
+#Iterative variable by which we can fill chr
+a = 1
+
+#Temporary dataframe with less memory usage by which to extract chromosome from which block is on
+HMM_matrix_temp <- HMM_matrix %>%
+  filter(.$RILID == 11002)
+
+#Fill chr
+for(i in seq(1, 11768, 7)){
+
+  chr[a] <- HMM_matrix_temp$Chr[HMM_matrix_temp$row.id == unique(HMM_matrix_temp$row.id)[i]]
+  
+  a = a + 1
+}
+
+```
+
+##GET CLUSTERS IN REAL DATA FOR P-VALUES
+```{r}
+#Get list of traits
+traits <- unique(grm_p$X2)[5:8]
+#Choose a window size
+window.size = 14
+# Pvalue cutoff
+cutoffs_p = c(0.001, 0.01, 0.05)
+#Get chr arms
+chr.arms = c("X", "2L", "2R", "3L", "3R")
+
+output.df.real.p <- as.data.frame(matrix(nrow = 3, ncol = 4))
+colnames(output.df.real.p) <- traits
+
+for(value in 1:length(cutoffs_p)){
+
+  #For loop per trait
+  for(n in 1:length(traits)){
+    
+    #Choose data from models without grm
+    grm_p_temp <- p_nogrm_true %>%
+      filter(X1 == traits[n])
+    
+    
+    #For loop per permutation
+    for(p in 1:nrow(grm_p_temp)){
+      
+      #Organize data from permutation for cluster analysis
+      permutation <- bind_cols(chr = chr, 
+                            pvalue = as.numeric((grm_p_temp)[1,2:1683]),
+                            pos.index = seq(1, 11768, 7))
+      
+      n_clusters <- 0
+      
+        for(arm in chr.arms){
+          
+          permutation.tmp = permutation %>%
+          filter(chr == arm) %>%
+          filter(pvalue <= cutoffs_p[value])
+          
+          if(nrow(permutation.tmp) > 1){
+            
+              n_clusters <- n_clusters + 1
+            
+                    for(i in 1:(nrow(permutation.tmp)-1)){
+                      
+                      blocks_apart <- permutation.tmp$pos.index[i + 1] - permutation.tmp$pos.index[i]
+                      
+                      if (blocks_apart < window.size) {
+                        
+                        n_clusters <- n_clusters
+                        
+                      } else {
+                        
+                        n_clusters = n_clusters + 1
+                      }
+                      
+                    }
+            
+          } else if(nrow(permutation.tmp) == 1){
+            
+            n_clusters <- n_clusters + 1
+          
+          } else {
+            
+            n_clusters <- n_clusters
+            
+          }
+      
+        } 
+  
+      output.df.real.p[value, n] <- n_clusters
+    }
+  }
+}
+
+sac_df[2:4,4] <- output.df.real.p[1]
+scc_df[2:4,4] <- output.df.real.p[2]
+sav_df[2:4,4] <- output.df.real.p[3]
+scv_df[2:4,4] <- output.df.real.p[4]
+
+```
+
+##GET CLUSTERS IN REAL DATA FOR Q-VALUES
+```{r}
+#Get list of traits
+traits <- unique(nogrm_p$X2)[5:8]
+#Choose a window size
+window.size = 14
+# Pvalue cutoff
+cutoffs_q = c(0.1, 0.2, 0.3)
+#Get chr arms
+chr.arms = c("X", "2L", "2R", "3L", "3R")
+
+output.df.real.q <- as.data.frame(matrix(nrow = 3, ncol = 4))
+colnames(output.df.real.q) <- traits
+
+for(value in 1:length(cutoffs_q)){
+
+  #For loop per trait
+  for(n in 1:length(traits)){
+    
+    #Choose data from model
+    p_temp <- p_nogrm_true %>%
+      filter(X1 == traits[n])
+    
+    
+    #For loop per permutation
+    for(p in 1:nrow(p_temp)){
+      
+      #Organize data from permutation for cluster analysis
+      permutation <- bind_cols(chr = chr, 
+                            qvalue = qvalue(as.numeric((grm_p_temp)[1,2:1683]))$qvalues,
+                            pos.index = seq(1, 11768, 7))
+      
+      n_clusters <- 0
+      
+        for(arm in chr.arms){
+          
+          permutation.tmp = permutation %>%
+          filter(chr == arm) %>%
+          filter(qvalue <= cutoffs_q[value])
+          permutation.tmp
+          
+          if(nrow(permutation.tmp) > 1){
+            
+              n_clusters <- n_clusters + 1
+            
+                    for(i in 1:(nrow(permutation.tmp)-1)){
+                      
+                      blocks_apart <- permutation.tmp$pos.index[i + 1] - permutation.tmp$pos.index[i]
+                      
+                      if (blocks_apart < window.size) {
+                        
+                        n_clusters <- n_clusters
+                        
+                      } else {
+                        
+                        n_clusters = n_clusters + 1
+                      }
+                      
+                    }
+            
+          } else if(nrow(permutation.tmp) == 1){
+            
+            n_clusters <- n_clusters + 1
+          
+          } else {
+            
+            n_clusters <- n_clusters
+            
+          }
+      
+        } 
+  
+      output.df.real.q[value, n] <- n_clusters
+    }
+  }
+}
+
+sac_df[5:7,4] <- output.df.real.q[1]
+scc_df[5:7,4] <- output.df.real.q[2]
+sav_df[5:7,4] <- output.df.real.q[3]
+scv_df[5:7,4] <- output.df.real.q[4]
+
+```
+
+
+### GET CLUSTERS FROM PERMUTATION TESTS FOR P-VALUES
+```{r}
+#Get list of traits
+traits <- unique(nogrm_p$X2)[5:8]
+#Choose a window size
+window.size = 14
+# Pvalue cutoff
+cutoff_p = c(0.1)
+#Get chr arms
+chr.arms = c("X", "2L", "2R", "3L", "3R")
+
+output.df.p <- as.data.frame(matrix(nrow = perm_no, ncol = 3))
+colnames(output.df.p) <- c('p <= 0.001', 'p <= 0.01', 'p <= 0.05')
+
+
+
+#For loop per trait
+for(n in 1:length(cutoff_p)){
+  
+  #Choose data from models with or without grm
+  p_temp <- nogrm_p %>%
+    filter(X2 == traits[4])
+  
+  
+  #For loop per permutation
+  for(p in 1:nrow(p_temp)){
+    
+    #Organize data from permutation for cluster analysis
+    permutation <- bind_cols(chr = chr, 
+                          pvalue = as.numeric((grm_p_temp)[p,3:1684]),
+                          pos.index = seq(1, 11768, 7))
+    
+    n_clusters <- 0
+    
+      for(arm in chr.arms){
+        
+        permutation.tmp = permutation %>%
+        filter(chr == arm) %>%
+        filter(pvalue <= cutoff_p[n])
+        
+        if(nrow(permutation.tmp) > 1){
+          
+            n_clusters <- n_clusters + 1
+          
+                  for(i in 1:(nrow(permutation.tmp)-1)){
+                    
+                    blocks_apart <- permutation.tmp$pos.index[i + 1] - permutation.tmp$pos.index[i]
+                    
+                    if (blocks_apart < window.size) {
+                      
+                      n_clusters <- n_clusters
+                      
+                    } else {
+                      
+                      n_clusters = n_clusters + 1
+                    }
+                    
+                  }
+          
+        } else if(nrow(permutation.tmp) == 1){
+          
+          n_clusters <- n_clusters + 1
+        
+        } else {
+          
+          n_clusters <- n_clusters
+          
+        }
+    
+      } 
+
+    output.df.p[p, n] <- n_clusters
+  }
+}
+
+```
+
+
+#We have sac_fake_df, scc_fake_df, sav_fake_df, scv_fake_df
+#Now fill in last column for the p-values
+```{r}
+sac_df[2:4, 5] <- c(round(length(sac_fake_df[1][sac_fake_df[1] >= as.integer(sac_df[2,4])])/perm_no, 4),
+                    round(length(sac_fake_df[2][sac_fake_df[2] >= as.integer(sac_df[3,4])])/perm_no, 4),
+                    round(length(sac_fake_df[3][sac_fake_df[3] >= as.integer(sac_df[4,4])])/perm_no, 4))
+
+scc_df[2:4, 5] <- c(round(length(scc_fake_df[1][scc_fake_df[1] >= as.integer(scc_df[2,4])])/perm_no, 4),
+                    round(length(scc_fake_df[2][scc_fake_df[2] >= as.integer(scc_df[3,4])])/perm_no, 4),
+                    round(length(scc_fake_df[3][scc_fake_df[3] >= as.integer(scc_df[4,4])])/perm_no, 4))
+
+sav_df[2:4, 5] <- c(round(length(sav_fake_df[1][sav_fake_df[1] >= as.integer(sav_df[2,4])])/perm_no, 4),
+                    round(length(sav_fake_df[2][sav_fake_df[2] >= as.integer(sav_df[3,4])])/perm_no, 4),
+                    round(length(sav_fake_df[3][sav_fake_df[3] >= as.integer(sav_df[4,4])])/perm_no, 4))
+
+scv_df[2:4, 5] <- c(round(length(scv_fake_df[1][scv_fake_df[1] >= as.integer(scv_df[2,4])])/perm_no, 4),
+                    round(length(scv_fake_df[2][scv_fake_df[2] >= as.integer(scv_df[3,4])])/perm_no, 4),
+                    round(length(scv_fake_df[3][scv_fake_df[3] >= as.integer(scv_df[4,4])])/perm_no, 4))
+```
+
+### GET CLUSTERS FROM PERMUTATION TESTS FOR Q-VALUES
+```{r}
+#Get list of traits
+traits <- unique(nogrm_p$X2)[5:8]
+#Choose a window size
+window.size = 14
+# Pvalue cutoff
+cutoff_q = c(0.1, 0.2, 0.3)
+#Get chr arms
+chr.arms = c("X", "2L", "2R", "3L", "3R")
+
+output.df.q <- as.data.frame(matrix(nrow = perm_no, ncol = 3))
+colnames(output.df.q) <- c('q <= 0.1', 'q <= 0.2', 'q <= 0.3')
+
+
+
+#For loop per trait
+for(n in 1:length(cutoff_q)){
+  
+  #Choose data from models with or without grm
+  p_temp <- nogrm_p %>%
+    filter(X2 == traits[4])
+  
+  
+  #For loop per permutation
+  for(p in 1:nrow(p_temp)){
+    
+    #Organize data from permutation for cluster analysis
+    permutation <- bind_cols(chr = chr, 
+                          qvalue = qvalue(as.numeric((grm_p_temp)[p,3:1684]))$qvalues,
+                          pos.index = seq(1, 11768, 7))
+    
+    n_clusters <- 0
+    
+      for(arm in chr.arms){
+        
+        permutation.tmp = permutation %>%
+        filter(chr == arm) %>%
+        filter(qvalue <= cutoff_q[n])
+        
+        if(nrow(permutation.tmp) > 1){
+          
+            n_clusters <- n_clusters + 1
+          
+                  for(i in 1:(nrow(permutation.tmp)-1)){
+                    
+                    blocks_apart <- permutation.tmp$pos.index[i + 1] - permutation.tmp$pos.index[i]
+                    
+                    if (blocks_apart < window.size) {
+                      
+                      n_clusters <- n_clusters
+                      
+                    } else {
+                      
+                      n_clusters = n_clusters + 1
+                    }
+                    
+                  }
+          
+        } else if(nrow(permutation.tmp) == 1){
+          
+          n_clusters <- n_clusters + 1
+        
+        } else {
+          
+          n_clusters <- n_clusters
+          
+        }
+    
+      } 
+
+    output.df.q[p, n] <- n_clusters
+  }
+}
+
+head(output.df.q)
+scv_fake_df <- output.df.q
+```
+
+#Now fill in the last column for the q-values
+```{r}
+sac_df[5:7, 5] <- c(round(length(sac_fake_df[1][sac_fake_df[1] >= as.integer(sac_df[5,4])])/perm_no, 4),
+                    round(length(sac_fake_df[2][sac_fake_df[2] >= as.integer(sac_df[6,4])])/perm_no, 4),
+                    round(length(sac_fake_df[3][sac_fake_df[3] >= as.integer(sac_df[7,4])])/perm_no, 4))
+
+scc_df[5:7, 5] <- c(round(length(scc_fake_df[1][scc_fake_df[1] >= as.integer(scc_df[5,4])])/perm_no, 4),
+                    round(length(scc_fake_df[2][scc_fake_df[2] >= as.integer(scc_df[6,4])])/perm_no, 4),
+                    round(length(scc_fake_df[3][scc_fake_df[3] >= as.integer(scc_df[7,4])])/perm_no, 4))
+
+sav_df[5:7, 5] <- c(round(length(sav_fake_df[1][sav_fake_df[1] >= as.integer(sav_df[5,4])])/perm_no, 4),
+                    round(length(sav_fake_df[2][sav_fake_df[2] >= as.integer(sav_df[6,4])])/perm_no, 4),
+                    round(length(sav_fake_df[3][sav_fake_df[3] >= as.integer(sav_df[7,4])])/perm_no, 4))
+
+scv_df[5:7, 5] <- c(round(length(scv_fake_df[1][scv_fake_df[1] >= as.integer(scv_df[5,4])])/perm_no, 4),
+                    round(length(scv_fake_df[2][scv_fake_df[2] >= as.integer(scv_df[6,4])])/perm_no, 4),
+                    round(length(scv_fake_df[3][scv_fake_df[3] >= as.integer(scv_df[7,4])])/perm_no, 4))
+```
+
+# Get Kth Percentile p-values {k = 1, 5, 10} for each block for SA/SC Traits for the permuted data sets
+```{r}
+# Sexual Antagonism Cage
+sac_p <- nogrm_p %>%
+  filter(.[2] == 'sa.axis.cage') %>%
+  select(X3:X1684)
+
+sac_plot <- bind_cols(chr = chr, block = seq(1, 11768, 7), 
+                      k_1 = vector(length = length(chr)),
+                      k_5 = vector(length = length(chr)),
+                      k_10 = vector(length = length(chr)))
+
+
+for(block in 1:length(chr)){
+    
+  perm <- pull(sac_p, block)
+  k <- quantile(perm, c(0.01, 0.05, 0.1))
+  
+  sac_plot$k_1[block] <- (-1)*log10(k[1])
+  sac_plot$k_5[block] <- (-1)*log10(k[2])
+  sac_plot$k_10[block] <- (-1)*log10(k[3])
+  
+}
+
+# Sexual Concordance Cage
+scc_p <- nogrm_p %>%
+  filter(.[2] == 'sc.axis.cage') %>%
+  select(X3:X1684)
+
+scc_plot <- bind_cols(chr = chr, block = seq(1, 11768, 7), 
+                      k_1 = vector(length = length(chr)),
+                      k_5 = vector(length = length(chr)),
+                      k_10 = vector(length = length(chr)))
+
+
+for(block in 1:length(chr)){
+    
+  perm <- pull(scc_p, block)
+  k <- quantile(perm, c(0.01, 0.05, 0.1))
+  
+  scc_plot$k_1[block] <- (-1)*log10(k[1])
+  scc_plot$k_5[block] <- (-1)*log10(k[2])
+  scc_plot$k_10[block] <- (-1)*log10(k[3])
+  
+}
+
+# Sexual Antagonism Vial
+sav_p <- nogrm_p %>%
+  filter(.[2] == 'sa.axis.vial') %>%
+  select(X3:X1684)
+
+sav_plot <- bind_cols(chr = chr, block = seq(1, 11768, 7), 
+                      k_1 = vector(length = length(chr)),
+                      k_5 = vector(length = length(chr)),
+                      k_10 = vector(length = length(chr)))
+
+
+for(block in 1:length(chr)){
+    
+  perm <- pull(sav_p, block)
+  k <- quantile(perm, c(0.01, 0.05, 0.1))
+  
+  sav_plot$k_1[block] <- (-1)*log10(k[1])
+  sav_plot$k_5[block] <- (-1)*log10(k[2])
+  sav_plot$k_10[block] <- (-1)*log10(k[3])
+  
+}
+
+# Sexual Concordance Vial
+scv_p <- nogrm_p %>%
+  filter(.[2] == 'sc.axis.vial') %>%
+  select(X3:X1684)
+
+scv_plot <- bind_cols(chr = chr, block = seq(1, 11768, 7), 
+                      k_1 = vector(length = length(chr)),
+                      k_5 = vector(length = length(chr)),
+                      k_10 = vector(length = length(chr)))
+
+
+for(block in 1:length(chr)){
+    
+  perm <- pull(scv_p, block)
+  k <- quantile(perm, c(0.01, 0.05, 0.1))
+  
+  scv_plot$k_1[block] <- (-1)*log10(k[1])
+  scv_plot$k_5[block] <- (-1)*log10(k[2])
+  scv_plot$k_10[block] <- (-1)*log10(k[3])
+  
+}
+
+```
+
+#Plot manhattan plots
+```{r}
+ggplot(data = sac_plot) + geom_line(aes(x = block, y = k_1), color = 'grey') + 
+  geom_line(aes(x = block, y = k_5), color = 'grey') + geom_line(aes(x = block, y = k_10), color = 'grey') + 
+  geom_line(aes(x = block, y = (-1)*log10(sac_true)), color = 'red') + 
+  xlab('block no.') + ylab('-log10(p)') + theme_minimal() +
+  ggtitle('SA Cage') + 
+  annotate('text', x = c(0, 319*7, 640*7, 941*7, 1287*7), y = 4, label = unique(chr)) + 
+  annotate('text', x = 12500, y = c(mean(sac_plot$k_1), mean(sac_plot$k_5), mean(sac_plot$k_10)),
+           label = c('k = 1', 'k = 5', 'k = 10')) 
+  
+ggplot(data = scc_plot) + geom_line(aes(x = block, y = k_1), color = 'grey') + 
+  geom_line(aes(x = block, y = k_5), color = 'grey') + geom_line(aes(x = block, y = k_10), color = 'grey') + 
+  geom_line(aes(x = block, y = (-1)*log10(scc_true)), color = 'red') + 
+  xlab('block no.') + ylab('-log10(p)') + theme_minimal() + 
+  ggtitle('SC Cage') + 
+  annotate('text', x = c(0, 319*7, 640*7, 941*7, 1287*7), y = 4, label = unique(chr)) + 
+  annotate('text', x = 12500, y = c(mean(scc_plot$k_1), mean(scc_plot$k_5), mean(scc_plot$k_10)),
+           label = c('k = 1', 'k = 5', 'k = 10')) 
+
+ggplot(data = sav_plot) + geom_line(aes(x = block, y = k_1), color = 'grey') + 
+  geom_line(aes(x = block, y = k_5), color = 'grey') + geom_line(aes(x = block, y = k_10), color = 'grey') + 
+  geom_line(aes(x = block, y = (-1)*log10(sav_true)), color = 'red') + 
+  xlab('block no.') + ylab('-log10(p)') + theme_minimal() + 
+  ggtitle('SA Vial') + 
+  annotate('text', x = c(0, 319*7, 640*7, 941*7, 1287*7), y = 4, label = unique(chr)) + 
+  annotate('text', x = 12500, y = c(mean(sav_plot$k_1), mean(sav_plot$k_5), mean(sav_plot$k_10)),
+           label = c('k = 1', 'k = 5', 'k = 10')) 
+
+ggplot(data = scv_plot) + geom_line(aes(x = block, y = k_1), color = 'grey') + 
+  geom_line(aes(x = block, y = k_5), color = 'grey') + geom_line(aes(x = block, y = k_10), color = 'grey') + 
+  geom_line(aes(x = block, y = (-1)*log10(scv_true)), color = 'red') +
+  xlab('block no.') + ylab('-log10(p)') + theme_minimal() + 
+  ggtitle('SC Vial') + 
+  annotate('text', x = c(0, 319*7, 640*7, 941*7, 1287*7), y = 4, label = unique(chr)) + 
+  annotate('text', x = 12500, y = c(mean(scv_plot$k_1), mean(scv_plot$k_5), mean(scv_plot$k_10)),
+           label = c('k = 1', 'k = 5', 'k = 10')) 
+```
+
+
+
+

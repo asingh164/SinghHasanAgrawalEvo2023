@@ -1,0 +1,8 @@
+Criteria,Number of blocks in the real data,Proportion of permutations with as many or more blocks,Mean number of blocks across permutations,Median number of blocks across permutations,2.5 percentile value,5 percentile value,95 percentile value,97.5 percentile value
+p <= 0.001,14,0.025,2,0,0,0,9,13
+p <= 0.01,29,0.2,18,13,0,1,53,71
+p <= 0.05,110,0.272,88,79,21,29,177,204
+p <= 0.1,287,0.061,175,166.5,70,85,300,331
+q <= 0.1,12,0.047,3,0,0,0,11,29
+q <= 0.2,17,0.098,10,0,0,0,50,121
+q <= 0.3,17,0.168,35,0,0,0,199,430

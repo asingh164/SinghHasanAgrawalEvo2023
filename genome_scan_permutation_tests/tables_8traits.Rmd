@@ -1,0 +1,200 @@
+---
+title: "grm_tables_8traits"
+output: pdf_document
+---
+
+#Load in packages
+
+```{r}
+setwd('/Users/asad/drive/Desktop/EEB498/permutation_tests')
+library(tidyverse)
+library(readxl)
+library(qvalue)
+library(cowplot)
+
+```
+
+#Read in data
+```{r}
+  ### Read p-values in from true genome scan 
+p_nogrm_true <- read_csv('/Users/asad/Drive/Desktop/EEB498/genome_scan/p_nogrm_true.csv', col_names = FALSE)
+
+   ### Read p-values from model without grm ###
+nogrm_p_list <- list.files(pattern = 'nogrm_p')
+nogrm_p <- read_csv(nogrm_p_list[1], col_names = FALSE, col_types = cols())
+
+for (i in 2:60){
+  temp <- read_csv(nogrm_p_list[i], col_names = FALSE, col_types = cols())
+  nogrm_p <- rbind(nogrm_p, temp)
+}
+```
+
+
+Columns:
+1) Statistical requirement (i.e.., p < 0.001, p < 0.01, p < 0.05, p < 0.1, q < 0.1, q < 0.2, q < 0.3)
+2) Number of blocks meeting this criteria in the unpermuted data
+3) The proportion of permutations with as many or more blocks as in the unpermuted data
+3) Mean - this refers to the mean across permutations for the number of blocks meeting that statistical criteria.
+4) Median - as above but for median
+5) 2.5 percentile value*
+6) 5 percentile value*
+7) 95 percentile value*
+8) 97.5 percentile value*
+
+
+#Set up data frame with the above columns
+```{r}
+traits <- unique(grm_p$X2)
+
+df <- data.frame(p_value = c('p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'p <= 0.1', 'q <= 0.1', 'q <= 0.2', 'q <= 0.3'),
+                 num_blocks_real_data = vector(length = 7),
+                 prop_perm_blocks_as_many_or_more = vector(length = 7),
+                 mean_num_perm_blocks = vector(length = 7),
+                 median_num_perm_blocks = vector(length = 7),
+                 percentile_2.5_perm = vector(length = 7),
+                 percentile_5_perm = vector(length = 7),
+                 percentile_95_perm = vector(length = 7),
+                 percentile_97.5_perm = vector(length = 7))
+
+data_frames <- c('df_mc', 'df_mv', 'df_fc', 'df_fv',
+                 'df_sac', 'df_scc', 'df_sav', 'df_scv')
+
+for(d in data_frames){
+  print(d)
+  assign(d, df)
+}
+
+list_of_dfs <- list(df_mc, df_mv, df_fc, df_fv,
+                    df_sac, df_scc, df_sav, df_scv)
+
+```
+
+#Fill number of blocks in real data
+```{r}
+
+list_of_values <- vector()
+
+for(i in 1:length(traits)){
+  
+  current_t <- p_nogrm_true %>%
+  filter(.[1] == traits[i]) %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+  
+  trait_p_0.001 <- length(current_t[current_t <= 0.001])
+  trait_p_0.01 <- length(current_t[current_t <= 0.01])
+  trait_p_0.05 <- length(current_t[current_t <= 0.05])
+  trait_p_0.1 <- length(current_t[current_t <= 0.1])
+  
+  current_t_q <- qvalue(current_t)$qvalues
+  
+  trait_q_0.1 <- length(current_t_q[current_t_q <= 0.1])
+  trait_q_0.2 <- length(current_t_q[current_t_q <= 0.2])
+  trait_q_0.3 <- length(current_t_q[current_t_q <= 0.3])
+  
+  list_of_dfs[[i]]$num_blocks_real_data <- c(list_of_values, trait_p_0.001, trait_p_0.01, trait_p_0.05, trait_p_0.1,
+                      trait_q_0.1, trait_q_0.2, trait_q_0.3)
+  
+}
+```
+
+#Fill proportion of permutations with as many or more blocks
+```{r}
+perm_no <- length(grm_p$X1)/8
+
+for(i in 1:length(traits)){
+  
+  current_trait_df <- grm_p %>%
+    filter(grm_p[2] == traits[i])
+  
+  
+  trait_p_0.001 <- vector(length = perm_no)
+  trait_p_0.01 <- vector(length = perm_no)
+  trait_p_0.05 <- vector(length = perm_no)
+  trait_p_0.1 <- vector(length = perm_no)
+  
+  trait_q_0.1 <- vector(length = perm_no)
+  trait_q_0.2 <- vector(length = perm_no)
+  trait_q_0.3 <- vector(length = perm_no)
+  
+  for(perm in 1:nrow(current_trait_df)){
+    
+    temp <- as.numeric(current_trait_df[perm,3:1684])
+    temp_q <- qvalue(as.numeric(current_trait_df[perm,3:1684]))$qvalues
+  
+    trait_p_0.001[perm] <- length(temp[temp <= 0.001])
+    trait_p_0.01[perm] <- length(temp[temp <= 0.01])
+    trait_p_0.05[perm] <- length(temp[temp <= 0.05])
+    trait_p_0.1[perm] <- length(temp[temp <= 0.1])
+    
+    trait_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+    trait_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+    trait_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+    
+  }
+  
+  list_perm_results <- list(trait_p_0.001, trait_p_0.01, trait_p_0.05, trait_p_0.1, 
+                            trait_q_0.1, trait_q_0.2, trait_q_0.3)
+  
+  num_to_compare <- list_of_dfs[[i]]$num_blocks_real_data
+  
+  #Fill proportion of permutations with as many or more blocks
+  list_of_dfs[[i]]$prop_perm_blocks_as_many_or_more <- c(round(length(trait_p_0.001[trait_p_0.001 >= num_to_compare[1]])/perm_no, 3),
+                                                     round(length(trait_p_0.01[trait_p_0.01 >= num_to_compare[2]])/perm_no, 3),
+                                                     round(length(trait_p_0.05[trait_p_0.05 >= num_to_compare[3]])/perm_no, 3),
+                                                     round(length(trait_p_0.1[trait_p_0.1 >= num_to_compare[4]])/perm_no, 3),
+                                                     round(length(trait_q_0.1[trait_q_0.1 >= num_to_compare[5]])/perm_no, 3),
+                                                     round(length(trait_q_0.2[trait_q_0.2 >= num_to_compare[6]])/perm_no, 3),
+                                                     round(length(trait_q_0.3[trait_q_0.3 >= num_to_compare[7]])/perm_no, 3))
+  
+  # Get mean number of blocks across permutations                                         
+  list_of_dfs[[i]]$mean_num_perm_blocks <- c(round(mean(trait_p_0.001), 0), round(mean(trait_p_0.01), 0),
+                                             round(mean(trait_p_0.05), 0), round(mean(trait_p_0.1), 0),
+                                             round(mean(trait_q_0.1), 0), round(mean(trait_q_0.2), 0),
+                                             round(mean(trait_q_0.3), 0))
+  
+  # Get median number of blocks across permutations
+  list_of_dfs[[i]]$median_num_perm_blocks <- c(median(trait_p_0.001), median(trait_p_0.01), median(trait_p_0.05),
+                                               median(trait_p_0.1), median(trait_q_0.1), median(trait_q_0.2),
+                                               median(trait_q_0.3))
+  
+  # Get nth percentile value of blocks at each threshold for n = {2.5, 5, 95, 97.5} from permutations
+  percentiles <- lapply(list_perm_results, quantile, probs = c(.025, 0.05, 0.95, 0.975 ))
+  
+  for(a in 1:length(list_perm_results)){
+    list_of_dfs[[i]]$percentile_2.5_perm[a] <- round(percentiles[[a]][1], 0)
+    list_of_dfs[[i]]$percentile_5_perm[a] <- round(percentiles[[a]][2], 0)
+    list_of_dfs[[i]]$percentile_95_perm[a] <- round(percentiles[[a]][3], 0)
+    list_of_dfs[[i]]$percentile_97.5_perm[a] <- round(percentiles[[a]][4], 0)
+  }
+  
+}
+
+list_of_dfs[[1]]
+```
+
+#Name columns in data.frame
+```{r}
+name_columns <- function(x){
+  
+  colnames(x) <- c('Criteria', 'Number of blocks in the real data', 
+'Proportion of permutations with as many or more blocks', 'Mean number of blocks across permutations',
+  'Median number of blocks across permutations', '2.5 percentile value', '5 percentile value', 
+  '95 percentile value', '97.5 percentile value')
+}
+
+lapply(list_of_dfs, name_columns)
+
+
+```
+
+```{r}
+file_names <- c('male_cage_table.csv', 'male_vial_table.csv', 'female_cage_table.csv', 'female_vial_table.csv',
+                'sa_cage_table.csv', 'sc_cage_table.csv', 'sa_vial_table.csv', 'sc_vial_table.csv')
+
+for(file in 1:length(list_of_dfs)){
+  
+  write_csv(list_of_dfs[[file]], path = file_names[file], col_names = TRUE)
+  
+}
+```

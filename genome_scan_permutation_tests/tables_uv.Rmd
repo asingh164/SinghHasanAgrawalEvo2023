@@ -1,0 +1,297 @@
+---
+title: "grm_tables_uv"
+output: pdf_document
+---
+
+################# SET UP #################
+```{r}
+setwd('/Users/asad/drive/Desktop/EEB498/permutation_tests')
+library(tidyverse)
+library(readxl)
+library(qvalue)
+```
+
+################# READ IN DATA #################
+```{r}
+  ### Read p-values in from true genome scan ###
+p_nogrm_true <- read_csv('/Users/asad/Drive/Desktop/EEB498/genome_scan/p_nogrm_true.csv', col_names = FALSE)
+
+   ### Read p-values from model without grm ###
+nogrm_p_list <- list.files(pattern = 'nogrm_p')
+nogrm_p <- read_csv(nogrm_p_list[1], col_names = FALSE, col_types = cols())
+
+for (i in 2:60){
+  temp <- read_csv(nogrm_p_list[i], col_names = FALSE, col_types = cols())
+  nogrm_p <- rbind(nogrm_p, temp)
+}
+```
+
+```{r}
+mc_df <- as.data.frame(matrix(nrow = 8, ncol = 5))
+mc_df$V1 <- c('Male Cage ', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'p <= 0.10',
+              'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+mc_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+mv_df <- as.data.frame(matrix(nrow = 8, ncol = 5))
+mv_df$V1 <- c('Male Vial ', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'p <= 0.10',
+              'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+mv_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+fc_df <- as.data.frame(matrix(nrow = 8, ncol = 5))
+fc_df$V1 <- c('Female Cage ', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'p <= 0.10',
+              'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+fc_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+fv_df <- as.data.frame(matrix(nrow = 8, ncol = 5))
+fv_df$V1 <- c('Female Vial ', 'p <= 0.001', 'p <= 0.01', 'p <= 0.05', 'p <= 0.10',
+              'Q <= 0.1', 'Q <= 0.2', 'Q <= 0.3')
+fv_df[1,2:5] <- c('Number of Blocks', 'Proportion of Permutations with as many or more blocks', 'Number of 1 Mb clusters', 'Proportion of Permutations with as many or more 1 Mb clusters')
+
+```
+
+### Fill in Number of Blocks for each SA and SC Trait
+```{r}
+
+# MALE CAGE
+
+#Collect all p-values for every 7th block for the trait
+mc_true <- p_nogrm_true %>%
+  filter(.[1] == 'male.mean.relative.fitness.cage') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+
+#Get number of blocks under each threshold
+mc_0.001_t <- length(mc_true[mc_true <= 0.001])
+mc_0.01_t <- length(mc_true[mc_true <= 0.01])
+mc_0.05_t <- length(mc_true[mc_true <= 0.05])
+mc_0.1_t <- length(mc_true[mc_true <= 0.1])
+
+mc_q_0.1_t <- length(qvalue(mc_true)$qvalues[qvalue(mc_true)$qvalues <= 0.1])
+mc_q_0.2_t <- length(qvalue(mc_true)$qvalues[qvalue(mc_true)$qvalues <= 0.2])
+mc_q_0.3_t <- length(qvalue(mc_true)$qvalues[qvalue(mc_true)$qvalues <= 0.3])
+
+#Put into respective df for each trait
+mc_df[2:8, 2] <- c(mc_0.001_t, mc_0.01_t, mc_0.05_t, mc_0.1_t, mc_q_0.1_t, mc_q_0.2_t, mc_q_0.3_t)
+
+# MALE VIAL
+
+#Collect all p-values for every 7th block for the trait
+mv_true <- p_nogrm_true %>%
+  filter(.[1] == 'male.mean.relative.fitness.vial') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+
+#Get number of blocks under each threshold
+mv_0.001_t <- length(mv_true[mv_true <= 0.001])
+mv_0.01_t <- length(mv_true[mv_true <= 0.01])
+mv_0.05_t <- length(mv_true[mv_true <= 0.05])
+mv_0.1_t <- length(mv_true[mv_true <= 0.1])
+
+mv_q_0.1_t <- length(qvalue(mv_true)$qvalues[qvalue(mv_true)$qvalues <= 0.1])
+mv_q_0.2_t <- length(qvalue(mv_true)$qvalues[qvalue(mv_true)$qvalues <= 0.2])
+mv_q_0.3_t <- length(qvalue(mv_true)$qvalues[qvalue(mv_true)$qvalues <= 0.3])
+
+#Put into respective df for each trait
+mv_df[2:8, 2] <- c(mv_0.001_t, mv_0.01_t, mv_0.05_t, mv_0.1_t, mv_q_0.1_t, mv_q_0.2_t, mv_q_0.3_t)
+
+# FEMALE CAGE
+
+#Collect all p-values for every 7th block for the trait
+fc_true <- p_nogrm_true %>%
+  filter(.[1] == 'female.mean.relative.fitness.cage') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+
+#Get number of blocks under each threshold
+fc_0.001_t <- length(fc_true[fc_true <= 0.001])
+fc_0.01_t <- length(fc_true[fc_true <= 0.01])
+fc_0.05_t <- length(fc_true[fc_true <= 0.05])
+fc_0.1_t <- length(fc_true[fc_true <= 0.1])
+
+fc_q_0.1_t <- length(qvalue(fc_true)$qvalues[qvalue(fc_true)$qvalues <= 0.1])
+fc_q_0.2_t <- length(qvalue(fc_true)$qvalues[qvalue(fc_true)$qvalues <= 0.2])
+fc_q_0.3_t <- length(qvalue(fc_true)$qvalues[qvalue(fc_true)$qvalues <= 0.3])
+
+#Put into respective df for each trait
+fc_df[2:8, 2] <- c(fc_0.001_t, fc_0.01_t, fc_0.05_t, fc_0.1_t, fc_q_0.1_t, fc_q_0.2_t, fc_q_0.3_t)
+
+# FEMALE VIAL
+
+#Collect all p-values for every 7th block for the trait
+fv_true <- p_nogrm_true %>%
+  filter(.[1] == 'female.mean.relative.fitness.vial') %>%
+  as.numeric(.[1,2:1683]) %>%
+  na.omit(.)
+
+
+#Get number of blocks under each threshold
+fv_0.001_t <- length(fv_true[fv_true <= 0.001])
+fv_0.01_t <- length(fv_true[fv_true <= 0.01])
+fv_0.05_t <- length(fv_true[fv_true <= 0.05])
+fv_0.1_t <- length(fv_true[fv_true <= 0.1])
+
+fv_q_0.1_t <- length(qvalue(fv_true)$qvalues[qvalue(fv_true)$qvalues <= 0.1])
+fv_q_0.2_t <- length(qvalue(fv_true)$qvalues[qvalue(fv_true)$qvalues <= 0.2])
+fv_q_0.3_t <- length(qvalue(fv_true)$qvalues[qvalue(fv_true)$qvalues <= 0.3])
+
+#Put into respective df for each trait
+fv_df[2:8, 2] <- c(fv_0.001_t, fv_0.01_t, fv_0.05_t, fv_0.1_t, fv_q_0.1_t, fv_q_0.2_t, fv_q_0.3_t)
+
+```
+
+```{r}
+perm_no <- length(nogrm_p$X1)/8
+
+## Male Cage ##
+
+mc_p_df <- nogrm_p %>%
+  filter(grm_p[2] == 'male.mean.relative.fitness.cage')
+
+
+mc_p_0.001 <- vector(length = perm_no)
+mc_p_0.01 <- vector(length = perm_no)
+mc_p_0.05 <- vector(length = perm_no)
+mc_p_0.1 <- vector(length = perm_no)
+
+mc_q_0.1 <- vector(length = perm_no)
+mc_q_0.2 <- vector(length = perm_no)
+mc_q_0.3 <- vector(length = perm_no)
+
+for(perm in 1:nrow(mc_p_df)){
+  
+  temp <- as.numeric(mc_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(mc_p_df[perm,3:1684]))$qvalues
+
+  mc_p_0.001[perm] <- length(temp[temp <= 0.001])
+  mc_p_0.01[perm] <- length(temp[temp <= 0.01])
+  mc_p_0.05[perm] <- length(temp[temp <= 0.05])
+  mc_p_0.1[perm] <- length(temp[temp <= 0.1])
+  
+  mc_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+  mc_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  mc_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+}
+
+mc_df[2, 3] <- round(length(mc_p_0.001[mc_p_0.001 >= mc_0.001_t])/perm_no, 3)
+mc_df[3, 3] <- round(length(mc_p_0.01[mc_p_0.01 >= mc_0.01_t])/perm_no, 3)
+mc_df[4, 3] <- round(length(mc_p_0.05[mc_p_0.05 >= mc_0.05_t])/perm_no, 3)
+mc_df[5, 3] <- round(length(mc_q_0.1[mc_q_0.1 >= mc_q_0.1_t])/perm_no, 3)
+mc_df[6, 3] <- round(length(mc_q_0.2[mc_q_0.2 >= mc_q_0.2_t])/perm_no, 3)
+mc_df[7, 3] <- round(length(mc_q_0.3[mc_q_0.3 >= mc_q_0.3_t])/perm_no, 3)
+
+## Male Vial ##
+
+mv_p_df <- nogrm_p %>%
+  filter(nogrm_p[2] == 'male.mean.relative.fitness.vial')
+
+
+mv_p_0.001 <- vector(length = perm_no)
+mv_p_0.01 <- vector(length = perm_no)
+mv_p_0.05 <- vector(length = perm_no)
+mv_p_0.1 <- vector(length = perm_no)
+
+mv_q_0.1 <- vector(length = perm_no)
+mv_q_0.2 <- vector(length = perm_no)
+mv_q_0.3 <- vector(length = perm_no)
+
+for(perm in 1:nrow(mv_p_df)){
+  
+  temp <- as.numeric(mv_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(mv_p_df[perm,3:1684]))$qvalues
+
+  mv_p_0.001[perm] <- length(temp[temp <= 0.001])
+  mv_p_0.01[perm] <- length(temp[temp <= 0.01])
+  mv_p_0.05[perm] <- length(temp[temp <= 0.05])
+  mv_p_0.1[perm] <- length(temp[temp <= 0.1])
+  
+  mv_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+  mv_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  mv_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+}
+
+mv_df[2, 3] <- round(length(mv_p_0.001[mv_p_0.001 >= mv_0.001_t])/perm_no, 3)
+mv_df[3, 3] <- round(length(mv_p_0.01[mv_p_0.01 >= mv_0.01_t])/perm_no, 3)
+mv_df[4, 3] <- round(length(mv_p_0.05[mv_p_0.05 >= mv_0.05_t])/perm_no, 3)
+mv_df[5, 3] <- round(length(mv_q_0.1[mv_q_0.1 >= mv_q_0.1_t])/perm_no, 3)
+mv_df[6, 3] <- round(length(mv_q_0.2[mv_q_0.2 >= mv_q_0.2_t])/perm_no, 3)
+mv_df[7, 3] <- round(length(mv_q_0.3[mv_q_0.3 >= mv_q_0.3_t])/perm_no, 3)
+
+
+## Female Cage ##
+
+fc_p_df <- nogrm_p %>%
+  filter(nogrm_p[2] == 'female.mean.relative.fitness.cage')
+
+
+fc_p_0.001 <- vector(length = perm_no)
+fc_p_0.01 <- vector(length = perm_no)
+fc_p_0.05 <- vector(length = perm_no)
+fc_p_0.1 <- vector(length = perm_no)
+
+fc_q_0.1 <- vector(length = perm_no)
+fc_q_0.2 <- vector(length = perm_no)
+fc_q_0.3 <- vector(length = perm_no)
+
+for(perm in 1:nrow(fc_p_df)){
+  
+  temp <- as.numeric(fc_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(fc_p_df[perm,3:1684]))$qvalues
+
+  fc_p_0.001[perm] <- length(temp[temp <= 0.001])
+  fc_p_0.01[perm] <- length(temp[temp <= 0.01])
+  fc_p_0.05[perm] <- length(temp[temp <= 0.05])
+  fc_p_0.1[perm] <- length(temp[temp <= 0.1])
+  
+  fc_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+  fc_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  fc_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+}
+
+fc_df[2, 3] <- round(length(fc_p_0.001[fc_p_0.001 >= fc_0.001_t])/perm_no, 3)
+fc_df[3, 3] <- round(length(fc_p_0.01[fc_p_0.01 >= fc_0.01_t])/perm_no, 3)
+fc_df[4, 3] <- round(length(fc_p_0.05[fc_p_0.05 >= fc_0.05_t])/perm_no, 3)
+fc_df[5, 3] <- round(length(fc_q_0.1[fc_q_0.1 >= fc_q_0.1_t])/perm_no, 3)
+fc_df[6, 3] <- round(length(fc_q_0.2[fc_q_0.2 >= fc_q_0.2_t])/perm_no, 3)
+fc_df[7, 3] <- round(length(fc_q_0.3[fc_q_0.3 >= fc_q_0.3_t])/perm_no, 3)
+
+## Female Vial ##
+
+fv_p_df <- nogrm_p %>%
+  filter(nogrm_p[2] == 'female.mean.relative.fitness.vial')
+
+
+fv_p_0.001 <- vector(length = perm_no)
+fv_p_0.01 <- vector(length = perm_no)
+fv_p_0.05 <- vector(length = perm_no)
+fv_p_0.1 <- vector(length = perm_no)
+
+fv_q_0.1 <- vector(length = perm_no)
+fv_q_0.2 <- vector(length = perm_no)
+fv_q_0.3 <- vector(length = perm_no)
+
+for(perm in 1:nrow(fv_p_df)){
+  
+  temp <- as.numeric(fv_p_df[perm,3:1684])
+  temp_q <- qvalue(as.numeric(fv_p_df[perm,3:1684]))$qvalues
+
+  fv_p_0.001[perm] <- length(temp[temp <= 0.001])
+  fv_p_0.01[perm] <- length(temp[temp <= 0.01])
+  fv_p_0.05[perm] <- length(temp[temp <= 0.05])
+  fv_p_0.1[perm] <- length(temp[temp <= 0.1])
+  
+  fv_q_0.1[perm] <- length(temp_q[temp_q <= 0.1])
+  fv_q_0.2[perm] <- length(temp_q[temp_q <= 0.2])
+  fv_q_0.3[perm] <- length(temp_q[temp_q <= 0.3])
+}
+
+fv_df[2, 3] <- round(length(fv_p_0.001[fv_p_0.001 >= fv_0.001_t])/perm_no, 3)
+fv_df[3, 3] <- round(length(fv_p_0.01[fv_p_0.01 >= fv_0.01_t])/perm_no, 3)
+fv_df[4, 3] <- round(length(fv_p_0.05[fv_p_0.05 >= fv_0.05_t])/perm_no, 3)
+fv_df[5, 3] <- round(length(fv_q_0.1[fv_q_0.1 >= fv_q_0.1_t])/perm_no, 3)
+fv_df[6, 3] <- round(length(fv_q_0.2[fv_q_0.2 >= fv_q_0.2_t])/perm_no, 3)
+fv_df[7, 3] <- round(length(fv_q_0.3[fv_q_0.3 >= fv_q_0.3_t])/perm_no, 3)
+```
+
